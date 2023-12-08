@@ -1,0 +1,33 @@
+[project]
+name = "haystack"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Raoul Grouls", email = "Raoul.Grouls@han.nl"},
+]
+dependencies = [
+    "torch>=2.1.1",
+    "pymupdf>=1.23.7",
+    "farm-haystack[faiss,file-conversion,inference]>=1.22.1",
+    "loguru>=0.7.2",
+    "pydantic>=1.10.13",
+    "tqdm>=4.66.1",
+]
+
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[project.optional-dependencies]
+scrape = [
+    "beautifulsoup4>=4.12.2",
+]
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "jupyter>=1.0.0",
+]
