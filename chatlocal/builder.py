@@ -1,4 +1,5 @@
 import os
+import pickle
 from typing import Optional
 
 from loguru import logger
@@ -15,7 +16,6 @@ from haystack.nodes import (
     TextConverter,
 )
 from haystack.pipelines import Pipeline
-import pickle
 
 
 class DocumentstoreBuilder:
@@ -131,7 +131,7 @@ class DocumentstoreBuilder:
         config_path = docstore / f"{tag}.json"
         return sql_url, index_path, config_path
 
-    def get_docstore(self, job: Job) -> None:
+    def get_docstore(self, job: Job) -> FAISSDocumentStore:
         docstore = self.settings.docstorepath
         if not docstore.exists():
             logger.info(f"creating docstorefolder at {docstore}")
@@ -154,6 +154,7 @@ class DocumentstoreBuilder:
             )
 
         logger.info(f"docstore has {self.document_store.get_document_count()} docs.")
+        return self.document_store
 
     def answer_questions(self, job: Job) -> None:
         with job.questionsfile.open("r") as f:
