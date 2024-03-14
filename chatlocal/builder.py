@@ -1,7 +1,7 @@
 import os
+from typing import Optional
 
 from loguru import logger
-from typing import Optional
 
 from chatlocal.settings import Job, Settings
 from haystack.document_stores import FAISSDocumentStore
@@ -15,6 +15,7 @@ from haystack.nodes import (
     TextConverter,
 )
 from haystack.pipelines import Pipeline
+import pickle
 
 
 class DocumentstoreBuilder:
@@ -78,40 +79,59 @@ class DocumentstoreBuilder:
         self.document_store: Optional[FAISSDocumentStore] = None
         self.retriever = None
 
-    def run_preprocessor(self, job: Job):
+    def run_preprocessor(self, job: Job) -> dict:
+        documentfile = self.settings.docstorepath / f"documents_{job.tag}.pickle"
+        if documentfile.exists():
+            logger.info(f"loading documents from {documentfile}")
+            with documentfile.open("rb") as f:
+                return pickle.load(f)
         files = [*job.datadir.glob("*")]
         logger.info(f"found {len(files)} files in {job.datadir}.")
         metadata = [{"filename": f.name} for f in files]
         result = self.pipeline.run(file_paths=files, meta=metadata)
         logger.info(f"retrieved {len(result['documents'])} document snippets.")
+        with documentfile.open("wb") as f:  # type: ignore
+            logger.info(f"saving documents to {documentfile}")
+            pickle.dump(result, f)
         return result
 
-    def add_files(self, job: Job):
+    def add_files(self, job: Job) -> None:
         result = self.run_preprocessor(job)
 
         if not self.document_store:
             self.get_docstore(job)
         assert self.document_store is not None
         self.document_store.write_documents(documents=result["documents"])
+        logger.info(f"Added {len(result['documents'])} documents to docstore.")
 
+    def update_embeddings(self, job: Job) -> None:
         if not self.retriever:
-            self.get_retriever(top_k=self.settings.top_k)
+            self.get_retriever(job)
+        assert self.retriever is not None
         logger.info("updating embeddings...")
         self.document_store.update_embeddings(
-            retriever=self.retriever, update_existing_embeddings=False, batch_size=64
+            retriever=self.retriever,
+            update_existing_embeddings=False,
+            batch_size=self.settings.retriever_batch_size,
         )
-        logger.info("saving docstore...")
-        _, index_path, config_path = self._get_paths(job.tag)
-        self.document_store.save(index_path=index_path, config_path=config_path)
+        self.save_docstore(job)
 
-    def _get_paths(self, tag: str):
+    def save_docstore(self, job: Job) -> None:
+        _, index_path, config_path = self._get_paths(job.tag)
+        logger.info("saving docstore...")
+        assert (
+            self.document_store is not None
+        ), "No document store found, run get_docstore first."
+        self.document_store.save(index_path=index_path, config_path=config_path)  # type: ignore
+
+    def _get_paths(self, tag: str) -> tuple:
         docstore = self.settings.docstorepath
         sql_url = f"sqlite:///{docstore}/{tag}.db"
         index_path = docstore / f"{tag}.faiss"
         config_path = docstore / f"{tag}.json"
         return sql_url, index_path, config_path
 
-    def get_docstore(self, job: Job):
+    def get_docstore(self, job: Job) -> None:
         docstore = self.settings.docstorepath
         if not docstore.exists():
             logger.info(f"creating docstorefolder at {docstore}")
@@ -126,6 +146,7 @@ class DocumentstoreBuilder:
                 faiss_index_factory_str="Flat",
                 embedding_dim=self.settings.embedding_dim,
             )
+            self.save_docstore(job)
         else:
             logger.info(f"loading existing FAISS docstore {job.tag} from {index_path}")
             self.document_store = FAISSDocumentStore.load(
@@ -134,7 +155,29 @@ class DocumentstoreBuilder:
 
         logger.info(f"docstore has {self.document_store.get_document_count()} docs.")
 
-    def get_retriever(self, top_k: int):
+    def answer_questions(self, job: Job) -> None:
+        with job.questionsfile.open("r") as f:
+            questions = f.readlines()
+        questions = [q.strip() for q in questions]
+        if not self.retriever:
+            self.get_retriever(job)
+        assert self.retriever is not None
+
+        logger.info(f"retrieving relevant papers for {job.questionsfile}")
+        outputfile = job.questionsfile.parent / f"{job.questionsfile.stem}_answers.txt"
+
+        with outputfile.open("w") as f:
+            for q in questions:
+                context = self.retriever.retrieve(
+                    document_store=self.document_store, query=q, top_k=job.top_k
+                )
+                f.write(f"question: {q}\n")
+                for i, doc in enumerate(context):
+                    f.write(f"{i}.{doc.meta['filename']} page: {doc.meta['page']}\n")
+                f.write("=====================================\n\n")
+        logger.info(f"saved answers to {outputfile}")
+
+    def get_retriever(self, job: Job) -> None:
         logger.info(f"Using {self.settings.api_key_string} as api key")
         API_KEY = os.environ.get(self.settings.api_key_string, None)
 
@@ -143,6 +186,6 @@ class DocumentstoreBuilder:
             embedding_model=self.settings.retrievertag,
             batch_size=self.settings.retriever_batch_size,
             api_key=API_KEY,
-            top_k=top_k,
+            top_k=job.top_k,
             max_seq_len=self.settings.max_seq_length,
         )
