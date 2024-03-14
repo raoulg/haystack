@@ -40,3 +40,9 @@ class Clusters(BaseModel):
         v2 = len(self.random[0])
 
         return f"Clusters({k1}x{v1} center, {k2}x{v2} random)"
+
+
+class ExtractorSettings(BaseModel):
+    K: int
+    blocks: int
+    spectral_extradims: int
