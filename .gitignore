@@ -6,3 +6,6 @@ downloads
 .vscode
 *.txt
 dev/
+.DS_Store
+artefacts/
+logs/
