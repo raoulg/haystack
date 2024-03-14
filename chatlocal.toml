@@ -1,0 +1,13 @@
+[job]
+tag = "scepa_250w"
+top_k = 10
+
+[builder]
+length = 250
+retrievertag = "text-embedding-ada-002"
+embedding_dim = 1536
+max_seq_length = 1536
+
+[extractor]
+K = 20
+blocks = 10
