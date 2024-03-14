@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class Settings(BaseModel):
@@ -27,6 +27,9 @@ class Job(BaseModel):
 class Embeddings(BaseModel):
     v: np.ndarray
     ids: list
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class Clusters(BaseModel):
@@ -54,3 +57,4 @@ class PromtOptions(BaseModel):
     docfun: str
     main_topic: str
     avoid: set
+    keywordmodel: str
