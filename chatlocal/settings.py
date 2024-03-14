@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from pydantic import BaseModel
 import numpy as np
+from pydantic import BaseModel
 
 
 class Settings(BaseModel):
@@ -46,3 +46,11 @@ class ExtractorSettings(BaseModel):
     K: int
     blocks: int
     spectral_extradims: int
+
+
+class PromtOptions(BaseModel):
+    l1: int
+    l2: int
+    docfun: str
+    main_topic: str
+    avoid: set
