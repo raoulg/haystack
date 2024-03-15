@@ -1,4 +1,6 @@
 import os
+import pickle
+import sys
 from pathlib import Path
 
 import tomli
@@ -6,10 +8,10 @@ from loguru import logger
 from models import get_embeddings
 
 from chatlocal.builder import DocumentstoreBuilder
+from chatlocal.graphs import Build_kw_weights, save_weights, sparse_weightmatrix
 from chatlocal.llm import KeywordExtraction
 from chatlocal.models import ExtractClusters
 from chatlocal.settings import ExtractorSettings, Job, PromtOptions, Settings
-import sys
 
 logger.remove()
 logger.add("logs/logfile.log", level="DEBUG")
@@ -86,10 +88,29 @@ def main(skip_add: bool = True):
     )
 
     kwextractor = KeywordExtraction(options=promptoptions, apikey=apikeystring)
-    outputfile = Path("artefacts/keywords.txt")
+    keywordsfile = Path("artefacts/keywords.txt")
 
-    keywords = kwextractor(clusters, builder, outputfile)
-    print(f"extracted {len(keywords)} keywords to {outputfile}")
+    keywords = kwextractor(clusters, builder, keywordsfile)
+    print(f"extracted {len(keywords)} keywords to {keywordsfile}")
+
+    textweightsfile = Path("artefacts/textweights.pkl")
+    if not textweightsfile.exists():
+        Wt = sparse_weightmatrix(K=30, emb=emb)
+        logger.info(f"saving textweights to {textweightsfile}")
+        save_weights(Wt, Path("artefacts/textweights.pkl"))
+    else:
+        logger.info(f"found {textweightsfile}, skipping textweights creation")
+        with textweightsfile.open("rb") as f:
+            Wt = pickle.load(f)
+
+    embeddingsfile = Path("artefacts/kw2textassociation.npy")
+    kw_weightsfile = Path("artefacts/kw_weights.pkl")
+
+    kwgraph = Build_kw_weights(
+        keywordsfile, embeddingsfile, kw_weightsfile, apikeystring
+    )
+    kw_weights = kwgraph(emb, Wt)
+    logger.info(f"Created kw_weights with {kw_weights.keys()}")
 
 
 if __name__ == "__main__":
