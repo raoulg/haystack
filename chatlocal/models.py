@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 from loguru import logger
-from settings import Clusters, Embeddings, ExtractorSettings
+from chatlocal.settings import Clusters, Embeddings, ExtractorSettings
 from sklearn.cluster import KMeans
 from sklearn.manifold import spectral_embedding
 from sklearn.metrics.pairwise import rbf_kernel
@@ -56,11 +56,23 @@ class ExtractClusters:
         return {label: [self.emb.ids[i] for i in ind[label]] for label in range(self.K)}
 
     def random_samples(self, labels: np.ndarray) -> dict:
+        logger.debug(f"labels shape: {labels.shape}")
+        lab_count = [np.sum(labels == i) for i in range(self.K)]
+        logger.debug(f"lab_count: {lab_count}")
         unique_labels = list(range(self.K))
         random_samples = {}
         for label in unique_labels:
+            if lab_count[label] <= self.blocks:
+                logger.warning(f"Cluster {label} has only {lab_count[label]} samples")
+                logger.warning("Setting replace to True")
+                replace = True
+            else:
+                logger.info(
+                    f"Cluster {label} has {lab_count[label]} samples, bigger than {self.blocks} {lab_count[label] > self.blocks}"
+                )
+                replace = False
             cluster_samples = np.random.choice(
-                np.where(labels == label)[0], self.blocks, replace=False
+                np.where(labels == label)[0], self.blocks, replace=replace
             )
             random_samples[label] = [self.emb.ids[i] for i in cluster_samples]
         return random_samples
