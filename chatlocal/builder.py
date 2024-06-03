@@ -79,6 +79,11 @@ class DocumentstoreBuilder:
         self.document_store: Optional[FAISSDocumentStore] = None
         self.retriever = None
 
+    def __call__(self, job: Job) -> None:
+        self.add_files(job)
+        self.get_retriever(job)
+        self.update_embeddings(job)
+
     def run_preprocessor(self, job: Job) -> dict:
         documentfile = self.settings.docstorepath / f"documents_{job.tag}.pickle"
         if documentfile.exists():
@@ -129,6 +134,9 @@ class DocumentstoreBuilder:
         sql_url = f"sqlite:///{docstore}/{tag}.db"
         index_path = docstore / f"{tag}.faiss"
         config_path = docstore / f"{tag}.json"
+        logger.debug(
+            f"sql_url: {sql_url}, index_path: {index_path}, config_path: {config_path}"
+        )
         return sql_url, index_path, config_path
 
     def get_docstore(self, job: Job) -> FAISSDocumentStore:
