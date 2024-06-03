@@ -32,9 +32,13 @@ build-backend = "pdm.backend"
 scrape = [
     "beautifulsoup4>=4.12.2",
 ]
+kld = [
+    "nltk>=3.8.1",
+]
 
 [tool.pdm.dev-dependencies]
 dev = [
     "jupyter>=1.0.0",
     "seaborn>=0.13.1",
+    "epub2txt>=0.1.6",
 ]

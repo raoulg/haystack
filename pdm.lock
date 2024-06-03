@@ -2,10 +2,23 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default", "dev"]
+groups = ["default", "dev", "kld"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:2faa4326f0924e33dea15e8d7d212e2fe3dcf6b7db3aa062a12687a2a01e26dc"
+content_hash = "sha256:34ab49ca2ae6833462f94f93010dab4be5074c57f140927643b5e4122b03774f"
+
+[[package]]
+name = "absl-py"
+version = "0.11.0"
+summary = "Abseil Python Common Libraries, see https://github.com/abseil/abseil-py."
+groups = ["dev"]
+dependencies = [
+    "six",
+]
+files = [
+    {file = "absl-py-0.11.0.tar.gz", hash = "sha256:673cccb88d810e5627d0c1c818158485d106f65a583880e2f730c997399bcfa7"},
+    {file = "absl_py-0.11.0-py3-none-any.whl", hash = "sha256:b3d9eb5119ff6e0a0125f6dabf2f9fae02f8acae7be70576002fac27235611c5"},
+]
 
 [[package]]
 name = "accelerate"
@@ -404,7 +417,7 @@ name = "click"
 version = "8.1.7"
 requires_python = ">=3.7"
 summary = "Composable command line interface toolkit"
-groups = ["default"]
+groups = ["default", "kld"]
 dependencies = [
     "colorama; platform_system == \"Windows\"",
 ]
@@ -418,8 +431,8 @@ name = "colorama"
 version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 summary = "Cross-platform colored terminal text."
-groups = ["default", "dev"]
-marker = "sys_platform == \"win32\" or platform_system == \"Windows\""
+groups = ["default", "dev", "kld"]
+marker = "platform_system == \"Windows\" or sys_platform == \"win32\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -559,6 +572,37 @@ summary = "Pythonic argument parser, that will make you smile"
 groups = ["default"]
 files = [
     {file = "docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491"},
+]
+
+[[package]]
+name = "ebooklib"
+version = "0.17.1"
+summary = "Ebook library which can handle EPUB2/EPUB3 and Kindle format"
+groups = ["dev"]
+dependencies = [
+    "lxml",
+    "six",
+]
+files = [
+    {file = "EbookLib-0.17.1.tar.gz", hash = "sha256:fe23e22c28050196c68db3e7b13b257bf39426d927cb395c6f2cc13ac11327f1"},
+]
+
+[[package]]
+name = "epub2txt"
+version = "0.1.6"
+requires_python = ">=3.8,<4.0"
+summary = "Convert epub to txt with additonal utils"
+groups = ["dev"]
+dependencies = [
+    "absl-py<0.12.0,>=0.11.0",
+    "ebooklib<0.18.0,>=0.17.1",
+    "httpx",
+    "logzero<2.0.0,>=1.6.3",
+    "tqdm<5.0.0,>=4.56.0",
+]
+files = [
+    {file = "epub2txt-0.1.6-py3-none-any.whl", hash = "sha256:d7af37cc261afe5d841d4e418f9da2903a0fdf44ba1800d74d850471caa4a0b6"},
+    {file = "epub2txt-0.1.6.tar.gz", hash = "sha256:7012199839982c01d02ed8b527311465004d8275cc894ae0597bb0d4ccac65f8"},
 ]
 
 [[package]]
@@ -1025,7 +1069,7 @@ name = "joblib"
 version = "1.3.2"
 requires_python = ">=3.7"
 summary = "Lightweight pipelining with Python functions"
-groups = ["default"]
+groups = ["default", "kld"]
 files = [
     {file = "joblib-1.3.2-py3-none-any.whl", hash = "sha256:ef4331c65f239985f3f2220ecc87db222f08fd22097a3dd5698f693875f8cbb9"},
     {file = "joblib-1.3.2.tar.gz", hash = "sha256:92f865e621e17784e7955080b6d042489e3b8e294949cc44c6eac304f59772b1"},
@@ -1439,11 +1483,24 @@ files = [
 ]
 
 [[package]]
+name = "logzero"
+version = "1.7.0"
+summary = "Robust and effective logging for Python 2 and 3"
+groups = ["dev"]
+dependencies = [
+    "colorama; sys_platform == \"win32\"",
+]
+files = [
+    {file = "logzero-1.7.0-py2.py3-none-any.whl", hash = "sha256:23eb1f717a2736f9ab91ca0d43160fd2c996ad49ae6bad34652d47aba908769d"},
+    {file = "logzero-1.7.0.tar.gz", hash = "sha256:7f73ddd3ae393457236f081ffebd044a3aa2e423a47ae6ddb5179ab90d0ad082"},
+]
+
+[[package]]
 name = "lxml"
 version = "5.1.0"
 requires_python = ">=3.6"
 summary = "Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API."
-groups = ["default"]
+groups = ["default", "dev"]
 files = [
     {file = "lxml-5.1.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:704f5572ff473a5f897745abebc6df40f22d4133c1e0a1f124e4f2bd3330ff7e"},
     {file = "lxml-5.1.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:9d3c0f8567ffe7502d969c2c1b809892dc793b5d0665f602aad19895f8d508da"},
@@ -1746,7 +1803,7 @@ name = "nltk"
 version = "3.8.1"
 requires_python = ">=3.7"
 summary = "Natural Language Toolkit"
-groups = ["default"]
+groups = ["default", "kld"]
 dependencies = [
     "click",
     "joblib",
@@ -2768,7 +2825,7 @@ name = "regex"
 version = "2023.12.25"
 requires_python = ">=3.7"
 summary = "Alternative regular expression module, to replace re."
-groups = ["default"]
+groups = ["default", "kld"]
 files = [
     {file = "regex-2023.12.25-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0694219a1d54336fd0445ea382d49d36882415c0134ee1e8332afd1529f0baa5"},
     {file = "regex-2023.12.25-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:b014333bd0217ad3d54c143de9d4b9a3ca1c5a29a6d0d554952ea071cff0f1f8"},
@@ -3620,7 +3677,7 @@ name = "tqdm"
 version = "4.66.2"
 requires_python = ">=3.7"
 summary = "Fast, Extensible Progress Meter"
-groups = ["default"]
+groups = ["default", "dev", "kld"]
 dependencies = [
     "colorama; platform_system == \"Windows\"",
 ]

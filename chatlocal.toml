@@ -1,5 +1,6 @@
 [job]
-tag = "scepa_250w"
+datadir = "code/haystack/assets/azkaban"
+tag = "harrypotter_250w"
 top_k = 10
 
 [builder]
@@ -10,4 +11,11 @@ max_seq_length = 1536
 
 [extractor]
 K = 20
-blocks = 10
+blocks = 5
+main_topic = "harry potter"
+
+[textgraph]
+K = 5
+
+[keywords]
+n = 1
