@@ -11,6 +11,7 @@ from scipy.spatial.distance import cdist
 from sklearn.neighbors import NearestNeighbors
 from sklearn.semi_supervised import LabelPropagation
 from tqdm import tqdm
+import networkx as nx
 
 from chatlocal.settings import Embeddings
 
@@ -21,7 +22,7 @@ def save_weights(weights: dict, weightsfile: Path) -> None:
         pickle.dump(weights, f)
 
 
-def sparse_weightmatrix(K: int, emb: Embeddings) -> csr_matrix:
+def sparse_weightmatrix(K: int, emb: Embeddings, metrics: bool) -> csr_matrix:
     logger.info(f"Creating sparse weight matrix for texts with K={K}")
     # find the K nearest neighbors for every embedding
     logger.info("Fit KNN model")
@@ -71,7 +72,18 @@ def sparse_weightmatrix(K: int, emb: Embeddings) -> csr_matrix:
     sparse_matrix_transpose = sparse_matrix.transpose()
     # Step 2: Average the matrix with its transpose
     symmetric_sparse_matrix = (sparse_matrix + sparse_matrix_transpose) / 2
+    if metrics:
+        calculate_metrics(symmetric_sparse_matrix, K)
     return symmetric_sparse_matrix
+
+
+def calculate_metrics(W: csr_matrix, K: int) -> None:
+    G = nx.from_scipy_sparse_array(W)
+    degrees = [d for n, d in G.degree()]
+    avg_degree = sum(degrees) / len(degrees)
+    diameter = nx.diameter(G)
+    logger.info(f"Average degree of the text graph with K={K} : {avg_degree:.2f}")
+    logger.info(f"Diameter of the graph : {diameter}")
 
 
 class Build_kw_weights:
@@ -81,6 +93,8 @@ class Build_kw_weights:
         keyword_embeddingfile: Path,
         kw_weightsfile: Path,
         apikey: str,
+        n1: int,
+        n2: int,
     ):
         self.apikey = apikey
         self.keywords = self.get_keyword(keywordsfile)
@@ -88,8 +102,8 @@ class Build_kw_weights:
         self.kw_weightsfile = kw_weightsfile
         self.model = "text-embedding-ada-002"
         self.batch_size = 64
-        self.n1 = 5
-        self.n2 = 35
+        self.n1 = n1
+        self.n2 = n2
 
     def __call__(self, textembeddings: Embeddings, Wt: csr_matrix) -> dict:
         logger.debug(f"texembeddings type: {type(textembeddings)}")
@@ -141,6 +155,9 @@ class Build_kw_weights:
         # similarity shape: (keywords, texts)
 
         # Initialize arrays to store the indices of closest and farthest vectors
+        logger.info(
+            f"initializing arrays for {self.n1} closest and {self.n2} farthest indices"
+        )
         closest_indices = np.zeros((keyword_embeddings.shape[0], self.n1), dtype=int)
         farthest_indices = np.zeros((keyword_embeddings.shape[0], self.n2), dtype=int)
 
