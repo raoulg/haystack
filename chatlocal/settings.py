@@ -1,7 +1,41 @@
 from pathlib import Path
 
 import numpy as np
+import tomli
+from loguru import logger
 from pydantic import BaseModel
+
+
+class UserInput(BaseModel):
+    datadir: str
+    tag: str
+    top_k: int
+    length: int
+    retrievertag: str
+    embedding_dim: int
+    max_seq_length: int
+    extractor_K: int
+    blocks: int
+    main_topic: str
+    keyword_n: int
+    textgraph_K: int
+
+    @classmethod
+    def fromtoml(cls, tomlsettings):
+        return cls(
+            datadir=tomlsettings["job"]["datadir"],
+            tag=tomlsettings["job"]["tag"],
+            top_k=tomlsettings["job"]["top_k"],
+            length=tomlsettings["builder"]["length"],
+            retrievertag=tomlsettings["builder"]["retrievertag"],
+            embedding_dim=tomlsettings["builder"]["embedding_dim"],
+            max_seq_length=tomlsettings["builder"]["max_seq_length"],
+            extractor_K=tomlsettings["extractor"]["K"],
+            blocks=tomlsettings["extractor"]["blocks"],
+            textgraph_K=tomlsettings["textgraph"]["K"],
+            main_topic=tomlsettings["extractor"]["main_topic"],
+            keyword_n=tomlsettings["keywords"]["n"],
+        )
 
 
 class Settings(BaseModel):
@@ -58,3 +92,30 @@ class PromtOptions(BaseModel):
     main_topic: str
     avoid: set
     keywordmodel: str
+
+
+def load_userinput(tomlfile: Path) -> UserInput:
+    if not tomlfile.exists():
+        msg = f"no chatlocal.toml file found in {Path.cwd()}"
+        logger.error(msg)
+        raise FileNotFoundError(msg)
+
+    else:
+        logger.info(f"loading settings from {tomlfile}")
+        with tomlfile.open("rb") as f:
+            tomlsettings = tomli.load(f)
+            userinput = UserInput.fromtoml(tomlsettings)
+        logger.info("=== job settings ===")
+        logger.info(f"running with tag {userinput.tag} and top_k {userinput.top_k}")
+        logger.info("=== builder settings ===")
+        logger.info(
+            f"using retrievertag {userinput.retrievertag} with length {userinput.length}"
+        )
+        logger.info(
+            f"using embed_dim {userinput.embedding_dim} and max_seq_length {userinput.max_seq_length}"
+        )
+        logger.info("=== extractor settings ===")
+        logger.info(
+            f"using K={userinput.extractor_K} and blocks={userinput.blocks}, topic {userinput.main_topic}"
+        )
+    return userinput
